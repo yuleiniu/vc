@@ -1,0 +1,6 @@
+[submodule "submodule/refer"]
+	path = submodule/refer
+	url = https://github.com/lichengunc/refer.git
+[submodule "submodule/cmn"]
+	path = submodule/cmn
+	url = https://github.com/ronghanghu/cmn.git
