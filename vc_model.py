@@ -24,6 +24,7 @@ class VC_Model(object):
         assert mode in ["train", "eval", "inference"]
         self.config = config
         self.mode = mode
+        self.is_supervised = config.is_supervised
 
         self.keys = 'vc'
         
@@ -367,23 +368,32 @@ class VC_Model(object):
 
         self.global_step = global_step
     
+    def setup_loss(self):   
+        """Sets up loss."""
+        # Classification loss
+        if self.is_supervised:
+            cls_loss = tf.nn.sparse_softmax_cross_entropy_with_logits(
+                    logits=self.scores, labels=self.labels)
+        else:
+            eps = 1e-12
+            cls_loss = -tf.log(tf.reduce_max(tf.maximum(tf.nn.softmax(self.scores), eps), axis=1))        
+        cls_loss = tf.reduce_mean(cls_loss)    
+        
+        # Regularization Loss
+        train_var_list = tf.trainable_variables()        
+        reg_var_list = [var for var in train_var_list if
+                (var.name[-9:-2] == 'weights' or var.name[-8:-2] == 'Matrix')]
+        reg_loss = self.config.weight_decay * tf.add_n([tf.nn.l2_loss(var) for var in reg_var_list])
+        
+        total_loss = cls_loss + reg_loss
+        
+        self.cls_loss = cls_loss
+        self.reg_loss = reg_loss
+        self.total_loss = total_loss
+    
     def setup_train_op(self):
         """Sets up the optimizer and train op."""
         config = self.config
-        
-        # Set up train variables.
-        train_var_list = tf.trainable_variables()
-        
-        # Add regularization to weight matrices (excluding bias).
-        reg_var_list = [var for var in train_var_list if
-                (var.name[-9:-2] == 'weights' or var.name[-8:-2] == 'Matrix')]
-        
-        # Loss
-        cls_loss = tf.nn.sparse_softmax_cross_entropy_with_logits(
-                logits=self.scores, labels=self.labels)
-        cls_loss = tf.reduce_mean(cls_loss)       
-        reg_loss = config.weight_decay * tf.add_n([tf.nn.l2_loss(var) for var in reg_var_list])
-        total_loss = cls_loss + reg_loss
         
         # Learning_rate
         learning_rate = tf.train.exponential_decay(learning_rate=config.start_lr, 
@@ -392,21 +402,19 @@ class VC_Model(object):
                                     decay_rate=config.lr_decay_rate, staircase=True)
             
         # Optimizer
-        solver = tf.train.MomentumOptimizer(learning_rate=learning_rate, momentum=self.config.momentum)
+        solver = tf.train.MomentumOptimizer(learning_rate=learning_rate, momentum=config.momentum)
         
         # Compute gradients
-        grads_and_vars = solver.compute_gradients(total_loss, var_list=train_var_list)
+        train_var_list = tf.trainable_variables() 
+        grads_and_vars = solver.compute_gradients(self.total_loss, var_list=train_var_list)
         # Clip gradient by L2 norm (set maximum L2 norm to 10).
-        grads_and_vars = [(tf.clip_by_norm(g, clip_norm=self.config.clip_gradients), v) for g, v in grads_and_vars]
+        grads_and_vars = [(tf.clip_by_norm(g, clip_norm=config.clip_gradients), v) for g, v in grads_and_vars]
         # Apply gradients.
         solver_op = solver.apply_gradients(grads_and_vars, global_step=self.global_step)
 
         # Add to update_ops collection.
         tf.add_to_collection(self.keys, solver_op)
 
-        self.cls_loss = cls_loss
-        self.reg_loss = reg_loss
-        self.total_loss = total_loss
         self.learning_rate = learning_rate
     
     def setup_update_op(self):
@@ -433,6 +441,7 @@ class VC_Model(object):
 
     def setup_ops(self):
         """Sets up all train_ops."""
+        self.setup_loss()
         self.setup_train_op()
         self.setup_update_op()
 

@@ -30,6 +30,7 @@ def main(unused_argv):
     # Initialize configs and parameters    
     model_config = config.Model_Config()
     file_config = config.File_Config()
+    max_iter = model_config.max_iter
     snapshot_dir = file_config.snapshot_dir
     snapshot_file = file_config.snapshot_file
     snapshot_start = file_config.snapshot_start
@@ -63,7 +64,9 @@ def main(unused_argv):
 
     # snapshot saver
     snapshot_saver = tf.train.Saver()
-
+    
+    cls_loss_avg = 0
+    acc_avg = 0
     initial_iter = sess.run(model.global_step)
     for n_iter in range(initial_iter, max_iter):
         # Read one batch
@@ -88,8 +91,11 @@ def main(unused_argv):
                              model.region_spatial_feat:spa_feat,
                              model.labels:label_val
                              })
-        print('\titer = %d, cls_loss (cur) = %f, acc = %f' %
-                (n_iter, cls_loss, acc))
+        
+        cls_loss_avg = 0.99*cls_loss_avg + 0.01*cls_loss
+        acc_avg = 0.99*acc_avg + 0.01*acc
+        print('\titer = %d, cls_loss (cur) = %f, cls_loss (avg) = %f, acc (cur) = %f, acc (avg) = %f' %
+                (n_iter, cls_loss, cls_loss_avg, acc, acc_avg))
     
         # Save log
         if ((n_iter+1) % log_interval) == 0:

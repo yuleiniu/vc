@@ -56,18 +56,24 @@ The ``recursive`` will help also clone the [refer API](https://github.com/lichen
 
 * Extract region features for RefCOCO/RefCOCO+/RefCOCOg, run:
 ```shell
-  python prepare_data.py --dataset refcoco  (for RefCOCO)
-  python prepare_data.py --dataset refcoco+ (for RefCOCO+)
-  python prepare_data.py --dataset refcocog (for RefCOCOg)
+  python prepare_data.py --dataset refcoco  #(for RefCOCO)
+  python prepare_data.py --dataset refcoco+ #(for RefCOCO+)
+  python prepare_data.py --dataset refcocog #(for RefCOCOg)
 ```
 
 ## Train
 
-* To train the model, run:
+* To train the model under supervised setting, run:
 ```shell
-  python train.py --dataset refcoco  (for RefCOCO)
-  python train.py --dataset refcoco+ (for RefCOCO+)
-  python train.py --dataset refcocog (for RefCOCOg)
+  python train.py --dataset refcoco  #(for RefCOCO)
+  python train.py --dataset refcoco+ #(for RefCOCO+)
+  python train.py --dataset refcocog #(for RefCOCOg)
+```
+* To train the model under unsupervised setting, run:
+```shell
+  python train.py --dataset refcoco  --supervised False --max_iter 80000 --lr_Decay_step 20000 snapshot_start 20000 #(for RefCOCO)
+  python train.py --dataset refcoco+ --supervised False --max_iter 80000 --lr_Decay_step 20000 snapshot_start 20000 #(for RefCOCO+)
+  python train.py --dataset refcocog --supervised False --max_iter 80000 --lr_Decay_step 20000 snapshot_start 20000 #(for RefCOCOg)
 ```
 
 ## Evaluation

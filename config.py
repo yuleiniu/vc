@@ -20,8 +20,12 @@ tf.flags.DEFINE_integer("snapshot_start", 120000,
                        "Start step for saving snapshot.")
 tf.flags.DEFINE_integer("snapshot_interval", 1000,
                        "Interval for saving snapshot.")
+tf.flags.DEFINE_integer("lr_decay_step", 120000,
+                       "Learning rate will decay after this step.")
 tf.flags.DEFINE_integer("max_iter", 180000,
                        "Maximum iterations for training.")
+tf.flags.DEFINE_boolean('supervised', True,
+                       "If false, the model will be trained under unsupervised learning")
 
 FLAGS = tf.app.flags.FLAGS
 
@@ -29,6 +33,9 @@ class Model_Config(object):
     """Wrapper class for model hyperparameters."""
     def __init__(self):
         """Sets the default model and training hyperparameters."""
+        # Supervised/unsupervised learning
+        self.is_supervised = FLAGS.supervised
+        
         # LSTM input and output dimensionality, respectively.
         self.embed_dim = 300
         self.lstm_dim = 1000
@@ -52,9 +59,10 @@ class Model_Config(object):
 
         # Hyperparameters for learning rate and Momentum optimizer
         self.start_lr = 0.01
-        self.lr_decay_step = 120000
+        self.lr_decay_step = FLAGS.lr_decay_step
         self.lr_decay_rate = 0.1
         self.momentum = 0.95
+        self.max_iter = FLAGS.max_iter
         
         # If not None, clip gradients to this value.
         self.clip_gradients = 10.0
@@ -68,9 +76,7 @@ class Model_Config(object):
 class File_Config(object):
     """Data path for reader and main function."""
     def __init__(self, model='vc'):
-        """Sets the data path."""
-        # LSTM input and output dimensionality, respectively.
-
+        """Sets the data path."""        
         # Dataset type.
         self.dataset = FLAGS.dataset # refcoco/refcoco+/refcocog
 
@@ -96,11 +102,15 @@ class File_Config(object):
 
     def set_log_options(self):
         """Set tensorflow log and snapshot options."""
-        self.log_dir = './tflog/%s/' % self.dataset
+        # Set snapshot and log options
+        if FLAGS.supervised:
+            self.log_dir = './tflog/%s/' % self.dataset
+            self.snapshot_dir = './tfmodel/%s/' % self.dataset
+        else:
+            self.log_dir = './tflog/%s_un/' % self.dataset
+            self.snapshot_dir = './tfmodel/%s_un/' % self.dataset
         self.log_interval = FLAGS.log_interval
 
-        # Set snapshot options
-        self.snapshot_dir = './tfmodel/%s/' % self.dataset
         self.snapshot_file =  os.path.join(self.snapshot_dir, 'iter_%d.tfmodel')
         self.snapshot_start = FLAGS.snapshot_start
         self.snapshot_interval  = FLAGS.snapshot_interval
