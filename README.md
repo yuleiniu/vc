@@ -71,9 +71,9 @@ The ``recursive`` will help also clone the [refer API](https://github.com/lichen
 ```
 * To train the model under unsupervised setting, run:
 ```shell
-  python train.py --dataset refcoco  --supervised False --max_iter 80000 --lr_Decay_step 20000 snapshot_start 20000 #(for RefCOCO)
-  python train.py --dataset refcoco+ --supervised False --max_iter 80000 --lr_Decay_step 20000 snapshot_start 20000 #(for RefCOCO+)
-  python train.py --dataset refcocog --supervised False --max_iter 80000 --lr_Decay_step 20000 snapshot_start 20000 #(for RefCOCOg)
+  python train.py --dataset refcoco  --supervised False --max_iter 80000 --lr_decay_step 20000 --snapshot_start 20000 #(for RefCOCO)
+  python train.py --dataset refcoco+ --supervised False --max_iter 80000 --lr_decay_step 20000 --snapshot_start 20000 #(for RefCOCO+)
+  python train.py --dataset refcocog --supervised False --max_iter 80000 --lr_decay_step 20000 --snapshot_start 20000 #(for RefCOCOg)
 ```
 
 ## Evaluation

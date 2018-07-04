@@ -375,7 +375,7 @@ class VC_Model(object):
             cls_loss = tf.nn.sparse_softmax_cross_entropy_with_logits(
                     logits=self.scores, labels=self.labels)
         else:
-            eps = 1e-12
+            eps = 1e-5
             cls_loss = -tf.log(tf.reduce_max(tf.maximum(tf.nn.softmax(self.scores), eps), axis=1))        
         cls_loss = tf.reduce_mean(cls_loss)    
         
